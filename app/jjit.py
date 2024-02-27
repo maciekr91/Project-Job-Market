@@ -1,14 +1,12 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-
 import pandas as pd
 import time
-import re
 import os
 
 
-def scrap_data_jjit(driver, offers, links):
+def parse_data_jjit(driver, offers: list, links: list):
     soup = BeautifulSoup(driver.page_source, 'html.parser')
 
     for offer in soup.find_all('div', class_="css-2crog7"):
@@ -38,9 +36,10 @@ def scrap_data_jjit(driver, offers, links):
 
     return offers, links
 
-def jjit_scroll(url):
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+def scrape_jjit(url: str):
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = os.getcwd()
     driver_path = os.path.join(current_dir, 'chromedriver.exe')
     service = Service(executable_path=driver_path)
     driver = webdriver.Chrome(service=service)
@@ -57,7 +56,7 @@ def jjit_scroll(url):
         for i in range(start_point, height, 700):
             driver.execute_script(f"window.scrollTo(0, {i});")
             time.sleep(0.5)
-            offers, links = scrap_data_jjit(driver, offers, links)
+            offers, links = parse_data_jjit(driver, offers, links)
 
         new_height = driver.execute_script("return document.body.scrollHeight")
 
@@ -88,7 +87,7 @@ def split_salary(row):
         return pd.Series([salary, salary, salary])
 
 
-def clear_data_jjit(offers_list):
+def clear_data_jjit(offers_list: list):
     columns = ['name', 'company', 'salary', 'location', 'work_mode', 'technologies', 'link']
     offers_df = pd.DataFrame(data=offers_list, columns=columns)
 
@@ -107,25 +106,27 @@ def clear_data_jjit(offers_list):
     return offers_df
 
 
-def search_jjit(categories_list, experience_list):
-    offers_all = pd.DataFrame(columns=
-                              ['experience', 'name', 'company', 'location', 'work_mode', 'salary_avg',
-                               'salary_low', 'salary_high', 'technologies', 'link'])
+def merge_new_offers(url: str, exp: str, offers_all: pd.DataFrame):
+    offers, links = scrape_jjit(url)
+
+    if offers:
+        new_offers = clear_data_jjit(offers)
+        new_offers['experience'] = exp
+        return pd.concat([offers_all, new_offers])
+
+    else:
+        return pd.DataFrame(columns=offers_all.columns)
+
+
+def search_jjit(categories_list: list, experience_list: list):
+    offers_all = pd.DataFrame(columns=['experience', 'name', 'company', 'location', 'work_mode', 'salary_avg',
+                                       'salary_low', 'salary_high', 'technologies', 'link'])
 
     for category in categories_list:
         for exp in experience_list:
-            url = 'https://justjoin.it/all-locations/' + category + '/experience-level_' + exp
 
-            offers, links = jjit_scroll(url)
-
-            if not offers:
-                continue
-
-            offers_df = clear_data_jjit(offers)
-
-            offers_df['experience'] = exp
-
-            offers_all = pd.concat([offers_all, offers_df])
+            url = f'https://justjoin.it/all-locations/{category}/experience-level_{exp}'
+            offers_all = merge_new_offers(url, exp, offers_all)
 
     offers_all['site'] = "justjoin.it"
 

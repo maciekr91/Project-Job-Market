@@ -1,15 +1,14 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-
 import pandas as pd
 import re
 import os
 
 
-def pracuj_switch(url):
-
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+def pracuj_switch(url: str):
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = os.getcwd()
     driver_path = os.path.join(current_dir, 'chromedriver.exe')
     service = Service(executable_path=driver_path)
     driver = webdriver.Chrome(service=service)
@@ -18,7 +17,7 @@ def pracuj_switch(url):
 
     try:
         no_pages = int(soup.find_all('div', class_="listing_w13k878q")[0].p.find_all('span')[1].text)
-    except:
+    except (IndexError, AttributeError):
         no_pages = 1
 
     offers = []
@@ -27,22 +26,22 @@ def pracuj_switch(url):
     for page in range(1, no_pages + 1):
         url_page = url + '&pn=' + str(page)
 
-        offers, links = scrap_data_pracuj(driver, url_page, offers, links)
+        offers, links = scrape_data_pracuj(driver, url_page, offers, links)
 
     driver.quit()
 
     return offers, links
 
-def scrap_data_pracuj(driver, url_page, offers, links):
 
+def scrape_data_pracuj(driver, url_page: str, offers: list, links: list):
     driver.get(url_page)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-    for offer in soup.find_all('div', class_ = "be8lukl core_po9665q"):
+    for offer in soup.find_all('div', class_="be8lukl core_po9665q"):
 
-        whole_offer = offer.find_all('div', class_ = "c1fljezf")[0]
-        offer_details = whole_offer.find_all('div', class_ = "c1wygkax")[0]
-        keywords = whole_offer.find_all('div', class_ = 'b1fdzgc4')
+        whole_offer = offer.find_all('div', class_="c1fljezf")[0]
+        offer_details = whole_offer.find_all('div', class_="c1wygkax")[0]
+        keywords = whole_offer.find_all('div', class_='b1fdzgc4')
 
         link = offer_details.a['href']
 
@@ -57,8 +56,8 @@ def scrap_data_pracuj(driver, url_page, offers, links):
         location = offer_details.h5.text
         work_mode = offer_details.find_all('li')[-1].text
         try:
-            salary = offer_details.find_all('span', class_ = "s1jki39v")[0].text.replace(u'\xa0', u'')
-        except:
+            salary = offer_details.find_all('span', class_="s1jki39v")[0].text.replace(u'\xa0', u'')
+        except (IndexError, AttributeError):
             salary = 'Undisclosed Salary'
 
         techs = [keyword.text for keyword in keywords[0].find_all('span')] if keywords else []
@@ -94,6 +93,7 @@ def clear_location(row):
 
     return row.split(',')[0]
 
+
 def clear_mode(row):
     if 'Praca zdalna' in row:
         return 'Praca zdalna'
@@ -103,7 +103,7 @@ def clear_mode(row):
         return 'Praca stacjonarna'
 
 
-def clear_data_pracuj(offers_list):
+def clear_data_pracuj(offers_list: list):
     exp_dict = {
         "Praktykant / Stażysta": "junior",
         "Asystent": "junior",
@@ -135,7 +135,8 @@ def clear_data_pracuj(offers_list):
 
     return offers_df
 
-def search_pracuj(url):
+
+def search_pracuj(url: str):
     offers, links = pracuj_switch(url)
     offers_df = clear_data_pracuj(offers)
 
