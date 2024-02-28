@@ -1,10 +1,28 @@
 import pickle
 import pandas as pd
 from datetime import datetime
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+import os
+import yaml
 
-DB_PATH = '../db/offers_db'
-TECH_DICT_PATH = '../db/tech_dict'
-BACKUP_PATH = '../db/backup'
+from geodata import get_geodata, geodata_todb
+
+config_path = '../config.yaml'
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
+
+DB_PATH = config['DB_PATH']
+TECH_DICT_PATH = config['TECH_DICT_PATH']
+BACKUP_PATH = config['BACKUP_PATH']
+
+
+def get_driver():
+    current_dir = os.getcwd()
+    driver_path = os.path.join(current_dir, 'chromedriver.exe')
+    service = Service(executable_path=driver_path)
+    driver = webdriver.Chrome(service=service)
+    return driver
 
 
 def create_tech_dict():
@@ -64,4 +82,9 @@ def merge_offers(offers_jjit: pd.DataFrame, offers_pracuj: pd.DataFrame):
 
     save_and_backup(new_offers, duplicates_columns)
 
+# TODO przenieść to do innej funkcji
+
     create_tech_dict()
+    get_geodata()
+    geodata_todb()
+
