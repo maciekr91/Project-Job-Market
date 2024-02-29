@@ -10,6 +10,7 @@ with open(config_path, 'r') as file:
 DB_PATH = config['DB_PATH']
 GEO_DICT_PATH = config['GEO_DICT_PATH']
 
+# TODO zmienić ponieważ w location mamy teraz listy jeśli jest multi
 
 def extract_geofeatures(geodata: dict):
     lat = geodata['lat']
