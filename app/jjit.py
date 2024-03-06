@@ -5,7 +5,8 @@ import time
 
 from commons import get_driver
 
-# TODO pobierać pozostałe lokalizacje oprócz głównej
+# TODO NIE ZAPISUJE SIĘ SCRAPOWANIE!!!
+
 
 def extract_features_jjit(offer: Tag, links: list):
     link = offer.find('a', class_="offer_list_offer_link css-4lqp8g")['href']
@@ -117,9 +118,11 @@ def merge_new_offers_jjit(url: str, exp: str, offers_all: pd.DataFrame):
         return pd.DataFrame(columns=offers_all.columns)
 
 
-def search_jjit(categories_list: list, experience_list: list):
+def search_jjit(categories_list: list):
     offers_all = pd.DataFrame(columns=['experience', 'name', 'company', 'location', 'work_mode', 'salary_avg',
                                        'salary_low', 'salary_high', 'technologies', 'link'])
+
+    experience_list = ['junior', 'mid', 'senior', 'c-level']
 
     for category in categories_list:
         for exp in experience_list:
