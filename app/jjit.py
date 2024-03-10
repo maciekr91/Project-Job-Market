@@ -115,7 +115,7 @@ def merge_new_offers_jjit(url: str, exp: str, offers_all: pd.DataFrame):
         return pd.concat([offers_all, new_offers])
 
     else:
-        return pd.DataFrame(columns=offers_all.columns)
+        return offers_all
 
 
 def search_jjit(categories_list: list):

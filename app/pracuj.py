@@ -168,18 +168,26 @@ def separate_and_map(list_to_edit):
                            'security', 'data', 'support', 'erp', 'architecture', 'other']
 
     technologies = [tech_dict[element] for element in list_to_edit if element in all_technologies]
-    tech_url = 'itth=' + '%2C'.join(technologies)
+    if technologies:
+        tech_url = 'itth=' + '%2C'.join(technologies)
+    else:
+        tech_url = None
+
     specializations = [tech_dict[element] for element in list_to_edit if element in all_specializations]
-    spec_url = 'its=' + '%2C'.join(specializations)
+    if specializations:
+        spec_url = 'its=' + '%2C'.join(specializations)
+    else:
+        spec_url = None
 
     return tech_url, spec_url
 
 
 def search_pracuj(categories_list: list):
-    tech_url, spec_url = separate_and_map(categories_list)
-
     base_url = 'https://it.pracuj.pl/praca?'
-    urls = [base_url+tech_url, base_url+spec_url]
+    # tech_url, spec_url = separate_and_map(categories_list)
+    urls = [base_url + url for url in separate_and_map(categories_list) if url is not None]
+
+    # urls = [base_url+tech_url, base_url+spec_url]
 
     new_offers = []
 

@@ -107,6 +107,14 @@ def criteria_verification(categories_list: list = []):
     return categories
 
 
+def show_duration(end_time, start_time):
+    duration = end_time - start_time
+    if duration > 60:
+        return str(round(duration/60, 1)) + ' minutes'
+    else:
+        return str(round(duration, 2)) + ' seconds'
+
+
 def get_new_data(categories_list: list, duplicates=duplicates_columns):
     verified_categories = criteria_verification(categories_list)
 
@@ -114,34 +122,29 @@ def get_new_data(categories_list: list, duplicates=duplicates_columns):
     start_time = time.time()
     offers_jjit = search_jjit(verified_categories)
     time1 = time.time()
-    print(f"Scraped {offers_jjit.shape[0]} offers in {time1-start_time:.2f} seconds\n")
+    print(f"Scraped {offers_jjit.shape[0]} offers in {show_duration(time1,start_time)}\n")
 
     print("--SCRAPING PRACUJ.PL--")
     offers_pracuj = search_pracuj(verified_categories)
     time2 = time.time()
-    print(f"Scraped {offers_pracuj.shape[0]} offers in {time2-time1:.2f} seconds\n")
+    print(f"Scraped {offers_pracuj.shape[0]} offers in {show_duration(time2, time1)}\n")
 
     print("--SAVING TO DATABSE--")
     new_offers = merge_offers(offers_jjit, offers_pracuj)
     new_offers_number = save_and_backup(new_offers, duplicates)
     time3 = time.time()
-    print(f"Added {new_offers_number} new offers in {time3 - time2:.2f} seconds\n")
+    print(f"Added {new_offers_number} new offers in {show_duration(time3, time2)}\n")
 
     print("--CREATING TECHNOLOGIES DICTIONARY--")
     create_tech_dict()
     time4 = time.time()
-    print(f"Technologies dictionary created in {time4 - time3:.2f} seconds\n")
+    print(f"Technologies dictionary created in {show_duration(time4, time3)}\n")
 
     print("--GATHERING GEOGRAPHIC DATA--")
     get_geodata()
     geodata_todb()
     time5 = time.time()
-    print(f"Geographic data added to database in {time5 - time4:.2f} seconds\n")
+    print(f"Geographic data added to database in {show_duration(time5, time4)}\n")
 
-    whole_time = time5-start_time
-    if whole_time > 60:
-        time_str = str(round(whole_time/60, 1)) + ' MINUTES'
-    else:
-        time_str = str(round(whole_time, 0)) + ' SECONDS'
-    print(f"--WHOLE PROCESS FINISHED SUCESSFULLY IN {time_str}--")
+    print(f"--WHOLE PROCESS FINISHED SUCESSFULLY IN {show_duration(time5, start_time)}--")
 
