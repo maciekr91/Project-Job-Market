@@ -1,3 +1,4 @@
 *.ipynb_checkpoint/
 *.ipynb
 venv/*
+db/backup*

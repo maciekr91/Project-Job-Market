@@ -120,7 +120,7 @@ def clear_data_pracuj(offers_list: list):
         "Menedżer": "c-level",
         "Dyrektor": "c-level",
         "Prezes": "c-level",
-    } # TODO przerzucić do config?
+    }
 
     columns = ['experience', 'name', 'company', 'location', 'work_mode', 'salary', 'technologies', 'link']
     offers_df = pd.DataFrame(data=offers_list, columns=columns)
@@ -184,10 +184,7 @@ def separate_and_map(list_to_edit):
 
 def search_pracuj(categories_list: list):
     base_url = 'https://it.pracuj.pl/praca?'
-    # tech_url, spec_url = separate_and_map(categories_list)
     urls = [base_url + url for url in separate_and_map(categories_list) if url is not None]
-
-    # urls = [base_url+tech_url, base_url+spec_url]
 
     new_offers = []
 
@@ -198,13 +195,6 @@ def search_pracuj(categories_list: list):
     offers_df = clear_data_pracuj(new_offers)
 
     return offers_df
-
-
-# def search_pracuj_to_delete(url: str):
-#     offers, _ = scrape_pracuj(url)
-#     offers_df = clear_data_pracuj(offers)
-#
-#     return offers_df
 
 
 #EXTRA FEATURES - LATER
