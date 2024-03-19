@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 import requests
 
-from database import save_to_db, load_from_db
+from database import load_from_db, update_voivodeship
 
 config_path = '../config.yaml'
 with open(config_path, 'r') as file:
@@ -102,8 +102,8 @@ def fill_empty_voivodeship(row: pd.Series, geo_dict: dict):
 def geodata_todb():
     """
     This function reads the existing job offers database and a geographic data dictionary from their
-    respective files. It then updates each job offer in the database, filling in missing voivodeship
-    information using the geographic data dictionary. The updated database is then saved back to the file.
+    respective files. It then updates each job offer in DataFrame, filling in missing voivodeship
+    information using the geographic data dictionary. The updated DataFrame is used to update DB
     """
     offers_db = load_from_db()
 
@@ -112,4 +112,4 @@ def geodata_todb():
 
     offers_db['voivodeship'] = offers_db.apply(lambda row: fill_empty_voivodeship(row, geo_dict), axis=1)
 
-    save_to_db(offers_db)
+    update_voivodeship(offers_db)

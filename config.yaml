@@ -1,4 +1,4 @@
-DB_PATH: '../db/offers_db'
+DB_PATH: '../db/offers.sqlite'
 TECH_DICT_PATH: '../db/tech_dict'
 BACKUP_PATH: '../db/backup'
 GEO_DICT_PATH: '../db/geo_dict'
