@@ -7,6 +7,7 @@ import time
 from geodata import get_geodata, geodata_todb
 from pracuj import search_pracuj
 from jjit import search_jjit
+from database import create_db_if_not_exists, save_to_db, load_from_db
 
 
 config_path = '../config.yaml'
@@ -25,31 +26,26 @@ def create_tech_dict():
     """
     This function reads the job offers database and compiles a dictionary where each key
     is a technology and its value is the count of how many times that technology appears
-    in the database. The resulting dictionary is then saved to a file. If the database file
-    is not found, an error message is printed.
+    in the database. The resulting dictionary is then saved to a file.
     """
-    try:
-        with open(DB_PATH, 'rb') as db_file:
-            offers_db = pickle.load(db_file)
+    offers_db = load_from_db()
 
-        tech_dict = {}
+    tech_dict = {}
 
-        for offer_list in offers_db['technologies']:
-            for tech in offer_list:
-                if tech in tech_dict:
-                    tech_dict[tech] += 1
-                else:
-                    tech_dict[tech] = 1
+    for offer_list in offers_db['technologies']:
+        for tech in offer_list:
+            if tech in tech_dict:
+                tech_dict[tech] += 1
+            else:
+                tech_dict[tech] = 1
 
-        with open(TECH_DICT_PATH, 'wb') as tech_file:
-            pickle.dump(tech_dict, tech_file)
-
-    except FileNotFoundError:
-        print("Couldn't prepare tech_dict. Database not found.")
+    with open(TECH_DICT_PATH, 'wb') as tech_file:
+        pickle.dump(tech_dict, tech_file)
 
 
 def save_and_backup(new_offers: pd.DataFrame, duplicates=duplicates_columns):
     """
+    TODO POPRAWIĆ - db zamiast pickla
     This function updates the existing offers database with new offers. It first creates a backup
     of the current database, then appends the new offers to the database, removing any duplicates
     based on specified columns. It also handles the creation of a new database file if it doesn't
@@ -65,27 +61,19 @@ def save_and_backup(new_offers: pd.DataFrame, duplicates=duplicates_columns):
     """
     backup_day = datetime.now().strftime("%Y-%m-%d")
 
-    try:
-        with open(DB_PATH, 'rb') as db_file:
-            offers_db = pickle.load(db_file)
+    offers_db = load_from_db()
 
-        backup_file_name = BACKUP_PATH + backup_day
-        with open(backup_file_name, 'wb') as backup_file:
-            pickle.dump(offers_db, backup_file)
+    backup_file_name = BACKUP_PATH + backup_day
+    with open(backup_file_name, 'wb') as backup_file:
+        pickle.dump(offers_db, backup_file)
 
-        offers_updated = pd.concat([offers_db, new_offers])
-        offers_updated = offers_updated.drop_duplicates(subset=duplicates)
-        new_offers_number = offers_updated.shape[0] - offers_db.shape[0]
+    offers_updated = pd.concat([offers_db, new_offers])
+    offers_updated = offers_updated.drop_duplicates(subset=duplicates)
+    new_offers_number = offers_updated.shape[0] - offers_db.shape[0]
 
-        with open(DB_PATH, 'wb') as db_file:
-            pickle.dump(offers_updated.reset_index(drop=True), db_file)
+    save_to_db(offers_updated.reset_index(drop=True))
 
-        return new_offers_number
-
-    except FileNotFoundError:
-        with open(DB_PATH, 'wb') as db_file:
-            pickle.dump(new_offers.reset_index(drop=True), db_file)
-        return "New database was created"
+    return new_offers_number
 
 
 def merge_offers(offers_jjit: pd.DataFrame, offers_pracuj: pd.DataFrame, duplicates=duplicates_columns):
@@ -202,6 +190,7 @@ def get_new_data(categories_list: list, duplicates=duplicates_columns):
     print(f"Scraped {offers_pracuj.shape[0]} offers in {show_duration(time2, time1)}\n")
 
     print("--SAVING TO DATABSE--")
+    create_db_if_not_exists()
     new_offers = merge_offers(offers_jjit, offers_pracuj)
     new_offers_number = save_and_backup(new_offers, duplicates)
     time3 = time.time()

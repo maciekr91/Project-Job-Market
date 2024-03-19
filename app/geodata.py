@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 import requests
 
+from database import save_to_db, load_from_db
+
 config_path = '../config.yaml'
 with open(config_path, 'r') as file:
     config = yaml.safe_load(file)
@@ -48,8 +50,8 @@ def get_geodata():
      to extract latitude, longitude, and voivodeship, storing the results in a dictionary. This dictionary
      is then saved to a file.
      """
-    with open(DB_PATH, 'rb') as db_file:
-        offers_db = pickle.load(db_file)
+    offers_db = load_from_db()
+
     cities = offers_db[offers_db['voivodeship'].isna()]['location'].drop_duplicates()
 
     geo_dict = {}
@@ -67,8 +69,8 @@ def get_geodata():
                 'voivodeship': voivodeship
             }
 
-    with open(GEO_DICT_PATH, 'wb') as file:
-        pickle.dump(geo_dict, file)
+    with open(GEO_DICT_PATH, 'wb') as geo_file:
+        pickle.dump(geo_dict, geo_file)
 
 
 def fill_empty_voivodeship(row: pd.Series, geo_dict: dict):
@@ -103,12 +105,11 @@ def geodata_todb():
     respective files. It then updates each job offer in the database, filling in missing voivodeship
     information using the geographic data dictionary. The updated database is then saved back to the file.
     """
-    with open(DB_PATH, 'rb') as db_file:
-        offers_db = pickle.load(db_file)
+    offers_db = load_from_db()
+
     with open(GEO_DICT_PATH, 'rb') as geo_file:
         geo_dict = pickle.load(geo_file)
 
     offers_db['voivodeship'] = offers_db.apply(lambda row: fill_empty_voivodeship(row, geo_dict), axis=1)
 
-    with open(DB_PATH, 'wb') as db_file:
-        pickle.dump(offers_db, db_file)
+    save_to_db(offers_db)
