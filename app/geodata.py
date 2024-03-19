@@ -12,6 +12,18 @@ GEO_DICT_PATH = config['GEO_DICT_PATH']
 
 
 def extract_geofeatures(geodata: dict):
+    """
+    This function parses a dictionary containing geographic data to extract the latitude, longitude,
+    and the voivodeship. It identifies the voivodeship based on the address components in the geodata,
+    with special handling for certain areas. If a voivodeship cannot be determined, it defaults to 'Not specified'.
+
+    Parameters:
+    - geodata (dict): A dictionary containing geographic data, including 'lat', 'lon', and
+                      'display_name' keys.
+
+    Returns:
+    - tuple: A tuple containing the latitude, longitude, and the identified voivodeship.
+    """
     lat = geodata['lat']
     lon = geodata['lon']
 
@@ -30,8 +42,14 @@ def extract_geofeatures(geodata: dict):
 
 
 def get_geodata():
-    with open(DB_PATH, 'rb') as file:
-        offers_db = pickle.load(file)
+    """
+     This function reads the job offers database, extracts unique cities with unspecified voivodeships,
+     and queries the Nominatim API for each city to obtain geographic data. It then processes this data
+     to extract latitude, longitude, and voivodeship, storing the results in a dictionary. This dictionary
+     is then saved to a file.
+     """
+    with open(DB_PATH, 'rb') as db_file:
+        offers_db = pickle.load(db_file)
     cities = offers_db[offers_db['voivodeship'].isna()]['location'].drop_duplicates()
 
     geo_dict = {}
@@ -54,6 +72,22 @@ def get_geodata():
 
 
 def fill_empty_voivodeship(row: pd.Series, geo_dict: dict):
+    """
+    This function checks if the 'voivodeship' field in a given job offer (represented as a pandas Series)
+    is missing. If so, it attempts to fill this field using the corresponding voivodeship from the
+    geographic data dictionary, based on the offer's location. If the location is not in the dictionary,
+    or if the voivodeship is already specified, the function returns the current voivodeship value.
+
+    Parameters:
+    - row (pd.Series): A pandas Series representing a single job offer, including 'location' and
+                       'voivodeship' fields.
+    - geo_dict (dict): A dictionary containing geographic data, mapping locations to their
+                       respective voivodeships.
+
+    Returns:
+    - str: The voivodeship of the job offer, either retrieved from the geographic data dictionary or
+           the original value in the Series.
+    """
     if pd.isna(row['voivodeship']):
         if row['location'] in geo_dict:
             return geo_dict[row['location']]['voivodeship']
@@ -64,12 +98,17 @@ def fill_empty_voivodeship(row: pd.Series, geo_dict: dict):
 
 
 def geodata_todb():
-    with open(DB_PATH, 'rb') as file:
-        offers_db = pickle.load(file)
-    with open(GEO_DICT_PATH, 'rb') as file:
-        geo_dict = pickle.load(file)
+    """
+    This function reads the existing job offers database and a geographic data dictionary from their
+    respective files. It then updates each job offer in the database, filling in missing voivodeship
+    information using the geographic data dictionary. The updated database is then saved back to the file.
+    """
+    with open(DB_PATH, 'rb') as db_file:
+        offers_db = pickle.load(db_file)
+    with open(GEO_DICT_PATH, 'rb') as geo_file:
+        geo_dict = pickle.load(geo_file)
 
     offers_db['voivodeship'] = offers_db.apply(lambda row: fill_empty_voivodeship(row, geo_dict), axis=1)
 
-    with open(DB_PATH, 'wb') as file:
-        pickle.dump(offers_db, file)
+    with open(DB_PATH, 'wb') as db_file:
+        pickle.dump(offers_db, db_file)

@@ -13,13 +13,8 @@ DRIVER_PATH = config['DRIVER_PATH']
 
 def get_driver():
     """
-    Initializes and returns a Selenium WebDriver with specified options.
-
     The function sets up a Chrome WebDriver with options to disable popup
     blocking and notifications. The window size is set to 2048x1536 pixels.
-
-    Returns:
-        WebDriver: An instance of Chrome WebDriver with specified settings.
     """
     try:
         service = Service(executable_path=DRIVER_PATH)
@@ -35,7 +30,8 @@ def get_driver():
     return driver
 
 
-# EXTRA FEATURES - LATER
+# EXTRA FEATURES - FOR LATER USE
+
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.common.by import By

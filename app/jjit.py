@@ -192,11 +192,8 @@ def merge_new_offers_jjit(url: str, exp: str, offers_all: pd.DataFrame):
 def search_jjit(categories_list: list):
     """
     Searches and aggregates job offers from JustJoin.It for specified categories and experience levels.
-
     This function iterates over a list of job categories and predefined experience levels, constructing URLs
     to scrape job offers from JustJoin.It. It compiles the offers into a pd.DataFrame
-
-    The resulting DataFrame contains information about the job offers
 
     Parameters:
     - categories_list (list): A list of job categories to be searched (e.g., ['it', 'marketing']).

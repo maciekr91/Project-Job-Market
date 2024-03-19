@@ -7,6 +7,18 @@ from commons import get_driver
 
 
 def extract_features_pracuj(offer: Tag, links: list):
+    """
+    This function processes a BeautifulSoup Tag representing a job offer and extracts
+    various details. It also keeps track of processed links to avoid duplicates.
+
+    Parameters:
+    - offer (Tag): A BeautifulSoup Tag object representing the job offer.
+    - links (list): A list of links that have already been processed.
+
+    Returns:
+    - tuple: A tuple containing the extracted offer details as a list and the updated list of links.
+              Returns (None, links) if the offer's link is already in the links list.
+    """
     whole_offer = offer.find('div', class_="c1fljezf")
     offer_details = whole_offer.find('div', class_="c1wygkax")
     keywords = whole_offer.find_all('div', class_='b1fdzgc4')
@@ -35,6 +47,20 @@ def extract_features_pracuj(offer: Tag, links: list):
 
 
 def parse_data_pracuj(driver, url_page: str, offers: list, links: list):
+    """
+    This function navigates to a specified URL using a Selenium WebDriver and parses the page's content
+    using BeautifulSoup. It iterates over each job offer on the page, extracts relevant details using the
+    'extract_features_pracuj' function, and accumulates them in a list.
+
+    Parameters:
+    - driver: The Selenium WebDriver used for web navigation and content extraction.
+    - url_page (str): The URL of the webpage to scrape job offers from.
+    - offers (list): A list used to accumulate extracted job offers.
+    - links (list): A list of links that have already been processed to avoid duplicate processing.
+
+    Returns:
+    - tuple: A tuple containing the list of accumulated job offers and the updated list of processed links.
+    """
     driver.get(url_page)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -49,6 +75,20 @@ def parse_data_pracuj(driver, url_page: str, offers: list, links: list):
 
 
 def scrape_pracuj(url: str):
+    """
+    This function initializes a Selenium WebDriver to navigate the provided URL.
+    It determies the total number of pages and iterating through each one.
+    For each page, it extracts job offers' details using the 'parse_data_pracuj' function.
+    It accumulates all the offers and their respective links to avoid duplicates.
+
+    Note: The function contains commented code for closing pop-ups which can be enabled if necessary.
+
+    Parameters:
+    - url (str): The base URL of the job listings on the Pracuj.pl website.
+
+    Returns:
+    - tuple: A tuple containing a list of job offers and a list of processed links.
+    """
     driver = get_driver()
     driver.get(url)
 
@@ -75,6 +115,20 @@ def scrape_pracuj(url: str):
 
 
 def clear_salary_pracuj(row: str):
+    """
+    This function takes a string describing the salary from a job offer and extracts the numerical
+    salary range and the salary period. It handles cases with undisclosed salaries, single-value
+    salaries, and converts hourly wages to monthly wages assuming a standard 160-hour work month.
+    It calculates and returns the lower and upper bounds of the salary range and the average salary.
+
+    Parameters:
+    - row (str): A string containing the salary information from a job offer.
+
+    Returns:
+    - pd.Series: A pandas Series containing three elements: the lower bound of the salary range,
+                 the upper bound of the salary range, and the average of these two values. If the
+                 salary is undisclosed, all three elements are None.
+    """
     if 'Undisclosed Salary' in row:
         return pd.Series([None, None, None])
 
@@ -93,6 +147,10 @@ def clear_salary_pracuj(row: str):
 
 
 def clear_location_pracuj(row: str):
+    """
+    This function extracts the primary location from a string that may contain multiple location details.
+    The logic is adapted to the specificity of the website
+    """
     if ':' in row:
         row = row.split(':')[-1]
 
@@ -100,6 +158,10 @@ def clear_location_pracuj(row: str):
 
 
 def clear_mode_pracuj(row: str):
+    """
+    Pracuj.pl often contains more than one working mode (i.e. Hybrid and Remote). This function
+    searches for most 'flexible' mode and assigns it to offer
+    """
     if 'Praca zdalna' in row:
         return 'Praca zdalna'
     elif 'Praca hybrydowa' in row:
@@ -109,6 +171,18 @@ def clear_mode_pracuj(row: str):
 
 
 def clear_data_pracuj(offers_list: list):
+    """
+    This function takes a list of job offers, each as a list of attributes, and converts it into
+    a structured pandas DataFrame. It standardizes the experience level using a predefined mapping,
+    cleans and splits salary information into structured format using 'clear_salary_pracuj',
+    extracts and standardizes the location and work mode. It also adds a source site identifier.
+
+    Parameters:
+    - offers_list (list): A list of job offers, where each offer is a list of attributes.
+
+    Returns:
+    - DataFrame: A pandas DataFrame with standardized and structured job offer data
+    """
     exp_dict = {
         "Praktykant / Stażysta": "junior",
         "Asystent": "junior",
@@ -136,6 +210,23 @@ def clear_data_pracuj(offers_list: list):
 
 
 def separate_and_map(list_to_edit):
+    """
+    One of the goals of the project is to unify searching regardless the website. Although every
+    website has its own specifity we decided to unify the names of categories to those on justjoin.it.
+    As pracuj has two different ways to filter offer: technology and specialization we map name of categories
+    from jjit to most appropriate searching criteria in pracuj.pl - sometimes it's through technology and
+    sometimes through specialization. We don't mix those two beacuse it narrows down the search area
+    which is undesirable. That's why we need to perform search through technology and specialization
+    if both are needed.
+
+    Parameters:
+    - list_to_edit (list): A list of keywords representing technologies and specializations.
+
+    Returns:
+    - tuple: A tuple containing two elements. The first element is a URL parameter string for technologies,
+             and the second is a URL parameter string for specializations. Each is None if the respective
+             category is not present in the input list.
+    """
     tech_dict = {
         'javascript': '33',
         'html': '34',
@@ -183,6 +274,16 @@ def separate_and_map(list_to_edit):
 
 
 def search_pracuj(categories_list: list):
+    """
+    This function compiles the whole process from preparing URLS, through scraping, cleaning data
+    and returning structured DataFrame of offers from pracuj.pl
+
+    Parameters:
+    - categories_list (list): A list of category keywords to search for.
+
+    Returns:
+    - DataFrame: A pandas DataFrame containing structured data of the aggregated job offers from Pracuj.pl.
+    """
     base_url = 'https://it.pracuj.pl/praca?'
     urls = [base_url + url for url in separate_and_map(categories_list) if url is not None]
 
@@ -197,7 +298,8 @@ def search_pracuj(categories_list: list):
     return offers_df
 
 
-#EXTRA FEATURES - LATER
+# EXTRA FEATURES - FOR LATER USE
+
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.common.action_chains import ActionChains
 
