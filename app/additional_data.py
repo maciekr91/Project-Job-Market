@@ -10,6 +10,28 @@ with open(config_path, 'r') as file:
     config = yaml.safe_load(file)
 
 GEO_DICT_PATH = config['GEO_DICT_PATH']
+TECH_DICT_PATH = config['TECH_DICT_PATH']
+
+
+def create_tech_dict():
+    """
+    This function reads the job offers database and compiles a dictionary where each key
+    is a technology and its value is the count of how many times that technology appears
+    in the database. The resulting dictionary is then saved to a file.
+    """
+    offers_db = load_from_db()
+
+    tech_dict = {}
+
+    for offer_list in offers_db['technologies']:
+        for tech in offer_list:
+            if tech in tech_dict:
+                tech_dict[tech] += 1
+            else:
+                tech_dict[tech] = 1
+
+    with open(TECH_DICT_PATH, 'wb') as tech_file:
+        pickle.dump(tech_dict, tech_file)
 
 
 def extract_geofeatures(geodata: dict):

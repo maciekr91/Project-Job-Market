@@ -4,7 +4,7 @@ from datetime import datetime
 import yaml
 import time
 
-from geodata import get_geodata, geodata_todb
+from additional_data import get_geodata, geodata_todb, create_tech_dict
 from pracuj import search_pracuj
 from jjit import search_jjit
 from database import create_db_if_not_exists, save_to_db, load_from_db
@@ -14,32 +14,10 @@ config_path = '../config.yaml'
 with open(config_path, 'r') as file:
     config = yaml.safe_load(file)
 
-TECH_DICT_PATH = config['TECH_DICT_PATH']
 BACKUP_PATH = config['BACKUP_PATH']
 
 # if columns below are the same we treat offer as duplicate
 duplicates_columns = ['site', 'experience', 'name', 'company']
-
-
-def create_tech_dict():
-    """
-    This function reads the job offers database and compiles a dictionary where each key
-    is a technology and its value is the count of how many times that technology appears
-    in the database. The resulting dictionary is then saved to a file.
-    """
-    offers_db = load_from_db()
-
-    tech_dict = {}
-
-    for offer_list in offers_db['technologies']:
-        for tech in offer_list:
-            if tech in tech_dict:
-                tech_dict[tech] += 1
-            else:
-                tech_dict[tech] = 1
-
-    with open(TECH_DICT_PATH, 'wb') as tech_file:
-        pickle.dump(tech_dict, tech_file)
 
 
 def save_and_backup(new_offers: pd.DataFrame, duplicates=duplicates_columns):
