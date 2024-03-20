@@ -9,7 +9,6 @@ config_path = '../config.yaml'
 with open(config_path, 'r') as file:
     config = yaml.safe_load(file)
 
-DB_PATH = config['DB_PATH']
 GEO_DICT_PATH = config['GEO_DICT_PATH']
 
 

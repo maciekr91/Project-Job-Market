@@ -14,7 +14,6 @@ config_path = '../config.yaml'
 with open(config_path, 'r') as file:
     config = yaml.safe_load(file)
 
-DB_PATH = config['DB_PATH']
 TECH_DICT_PATH = config['TECH_DICT_PATH']
 BACKUP_PATH = config['BACKUP_PATH']
 
@@ -45,15 +44,13 @@ def create_tech_dict():
 
 def save_and_backup(new_offers: pd.DataFrame, duplicates=duplicates_columns):
     """
-    TODO POPRAWIĆ - db zamiast pickla
     This function updates the existing offers database with new offers. It first creates a backup
-    of the current database, then appends the new offers to the database, removing any duplicates
-    based on specified columns. It also handles the creation of a new database file if it doesn't
-    already exist.
+    of the current database into pickle file and then appends the new offers to the database,
+    removing any duplicates based on specified columns.
 
     Parameters:
     - new_offers (pd.DataFrame): A DataFrame containing new job offers to be added to the database.
-    - duplicates (list, optional): A list of columns to consider when removing duplicates.
+    - duplicates (list): A list of columns to consider when removing duplicates.
 
     Returns:
     - int or str: The number of new offers added to the database, or a message indicating that a
@@ -69,7 +66,7 @@ def save_and_backup(new_offers: pd.DataFrame, duplicates=duplicates_columns):
 
     offers_updated = pd.concat([offers_db, new_offers])
     offers_updated = offers_updated.drop_duplicates(subset=duplicates)
-    new_offers_number = offers_updated.shape[0] - offers_db.shape[0]
+    new_offers_number = offers_updated.shape[0]
 
     save_to_db(offers_updated.reset_index(drop=True))
 
@@ -174,7 +171,6 @@ def get_new_data(categories_list: list, duplicates=duplicates_columns):
     - categories_list (list): A list of categories based on which the job offers are scraped.
     - duplicates (list, optional): Columns to consider when removing duplicates from the offers.
                                    Defaults to `duplicates_columns`.
-
     """
     verified_categories = criteria_verification(categories_list)
 
