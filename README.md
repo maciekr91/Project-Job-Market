@@ -1,4 +1,4 @@
-# Webscrapping IT Job Market
+# Web Scraping IT Job Market
 
 <img src="img/title.png">
 
